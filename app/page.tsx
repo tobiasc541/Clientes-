@@ -17,7 +17,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const ADMIN_PIN_DEFAULT = '2626'
+const ADMIN_PIN_DEFAULT = '46892389'
 const currencyARS = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const monthLabelEsAR = (date = new Date()) => new Intl.DateTimeFormat('es-AR', { month: 'long', year: 'numeric' }).format(date)
 const cx = (...c: string[]) => c.filter(Boolean).join(' ')
@@ -74,7 +74,7 @@ function ClientLogin({ onLogin }: { onLogin: (n: string)=>void }) {
 /* ---------------- VISTA CLIENTE ---------------- */
 function ClientView({ client, onLogout, benefits }:{ client:any, onLogout:()=>void, benefits:any[] }) {
   const month = monthLabelEsAR()
-  const gasto = client.gastos_mes || 0
+  const gasto = client.gasto_mes || 0   // 👈 corregido aquí
   const ordered = [...benefits].sort((a,b)=>a.umbral-b.umbral)
   const next = ordered.find((b)=>gasto < b.umbral)
   const progress = useMemo(()=>{
@@ -159,13 +159,13 @@ function ClientView({ client, onLogout, benefits }:{ client:any, onLogout:()=>vo
 
 /* ---------------- PANEL ADMIN ---------------- */
 function AdminPanel({ clients, setClients, benefits, setBenefits }:{ clients:any[], setClients:Function, benefits:any[], setBenefits:Function }) {
-  const [newClient, setNewClient] = useState({ numero_cliente: '', nombre: '', gastos_mes: 0 })
+  const [newClient, setNewClient] = useState({ numero_cliente: '', nombre: '', gasto_mes: 0 }) // 👈 corregido aquí
 
   async function addClient() {
     if (!newClient.numero_cliente || !newClient.nombre) return
     const { data, error } = await supabase.from('clientes').insert([newClient]).select()
     if (!error && data) setClients([...clients, ...data])
-    setNewClient({ numero_cliente: '', nombre: '', gastos_mes: 0 })
+    setNewClient({ numero_cliente: '', nombre: '', gasto_mes: 0 }) // 👈 corregido
   }
 
   async function updateClient(c:any) {
@@ -178,57 +178,25 @@ function AdminPanel({ clients, setClients, benefits, setBenefits }:{ clients:any
     if (!error) setClients(clients.filter(x => x.numero_cliente !== id))
   }
 
-  async function addBenefit() {
-    const nuevo = { umbral: 0, descripcion: 'Nuevo beneficio' }
-    const { data, error } = await supabase.from('beneficios').insert([nuevo]).select()
-    if (!error && data) setBenefits([...benefits, ...data])
-  }
-
-  async function updateBenefit(b:any) {
-    const { error } = await supabase.from('beneficios').update(b).eq('id', b.id)
-    if (!error) setBenefits(benefits.map(x => x.id === b.id ? b : x))
-  }
-
-  async function deleteBenefit(id:number) {
-    const { error } = await supabase.from('beneficios').delete().eq('id', id)
-    if (!error) setBenefits(benefits.filter(x => x.id !== id))
-  }
-
   return (
     <div className='max-w-6xl mx-auto'>
       <h2 className='text-xl font-semibold mb-4'>Panel Admin</h2>
-      {/* clientes */}
       <Card className='mb-6'>
         <CardHeader><h3 className='font-medium'>Clientes</h3></CardHeader>
         <CardContent>
           {clients.map(c=>(
             <div key={c.numero_cliente} className='flex items-center gap-2 mb-2'>
               <Input value={c.nombre} onChange={e=>updateClient({ ...c, nombre: e.target.value })}/>
-              <Input value={c.gastos_mes} onChange={e=>updateClient({ ...c, gastos_mes: Number(e.target.value) })}/>
+              <Input value={c.gasto_mes} onChange={e=>updateClient({ ...c, gasto_mes: Number(e.target.value) })}/> {/* 👈 corregido */}
               <Button size='sm' variant='destructive' onClick={()=>deleteClient(c.numero_cliente)}><Trash2/></Button>
             </div>
           ))}
           <div className='mt-4 flex gap-2'>
             <Input placeholder='Nº cliente' value={newClient.numero_cliente} onChange={e=>setNewClient({...newClient, numero_cliente:e.target.value})}/>
             <Input placeholder='Nombre' value={newClient.nombre} onChange={e=>setNewClient({...newClient, nombre:e.target.value})}/>
-            <Input placeholder='Gasto' value={newClient.gastos_mes} onChange={e=>setNewClient({...newClient, gastos_mes:Number(e.target.value)})}/>
+            <Input placeholder='Gasto' value={newClient.gasto_mes} onChange={e=>setNewClient({...newClient, gasto_mes:Number(e.target.value)})}/> {/* 👈 corregido */}
             <Button onClick={addClient}><Plus/>Agregar</Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* beneficios */}
-      <Card>
-        <CardHeader><h3 className='font-medium'>Beneficios</h3></CardHeader>
-        <CardContent>
-          {benefits.map(b=>(
-            <div key={b.id} className='flex items-center gap-2 mb-2'>
-              <Input value={b.umbral} onChange={e=>updateBenefit({ ...b, umbral:Number(e.target.value) })}/>
-              <Input value={b.descripcion} onChange={e=>updateBenefit({ ...b, descripcion:e.target.value })}/>
-              <Button size='sm' variant='destructive' onClick={()=>deleteBenefit(b.id)}><Trash2/></Button>
-            </div>
-          ))}
-          <Button onClick={addBenefit}><Plus/>Agregar Beneficio</Button>
         </CardContent>
       </Card>
     </div>
