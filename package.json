@@ -27,3 +27,9 @@
     "eslint-config-next": "14.2.5"
   }
 }
+"scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "next lint --no-lint"
+}
