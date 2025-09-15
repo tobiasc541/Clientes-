@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light dark; }
+body { @apply bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-50; }
+.border { border-color: rgba(148,163,184,0.3); }
